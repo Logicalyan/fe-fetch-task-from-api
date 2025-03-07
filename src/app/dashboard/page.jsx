@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast, Toaster } from "react-hot-toast";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sun, Moon } from "lucide-react";
+import ModalsEdit from "@/components/dashboard/ModalsEdit";
+import useEditUser from "@/hooks/useEditUser";
 
 export default function UserDashboard() {
+  const { openEdit, setOpenEdit, editUser, setEditUser, handleOpenEdit, handleEdit } = useEditUser();
+  
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState({
@@ -20,13 +24,12 @@ export default function UserDashboard() {
     next_page_url: null,
     prev_page_url: null,
   });
-  const [loading, setLoading] = useState(true);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
 
-  // State untuk modal Edit
-  const [openEdit, setOpenEdit] = useState(false);
-  const [editUser, setEditUser] = useState({ id: "", name: "", email: "" });
+  const [loading, setLoading] = useState(true);
+
+  // State untuk modal Create
+  const [openCreate, setOpenCreate] = useState(false);
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
 
   //State untuk modal Delete
   const [openDelete, setOpenDelete] = useState(false);
@@ -77,6 +80,10 @@ export default function UserDashboard() {
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleOpenCreate = () => {
+    setOpenCreate(true);
+  };
+
   const handleCreateUser = () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
       toast.error("All fields are required!");
@@ -87,41 +94,13 @@ export default function UserDashboard() {
       .then(() => {
         toast.success("User created successfully!");
         setNewUser({ name: "", email: "", password: "" });
-        setIsCreateOpen(false);
+        setOpenCreate(false);
         fetchUsers();
       })
       .catch(() => {
         toast.error("Failed to create user");
       });
   };
-
-  // Buka modal Edit dengan data user yang dipilih
-  const handleOpenEdit = (user) => {
-    setEditUser(user);
-    setOpenEdit(true);
-  };
-
-  // Handle edit user
-  const handleEdit = async () => {
-    if (!editUser.name || !editUser.email) {
-      toast.error("All fields are required");
-      return;
-    }
-
-    try {
-      await axios.put(`http://localhost:8000/api/users/${editUser.id}`, editUser);
-      toast.success("User updated successfully");
-
-      // Setelah update, re-fetch halaman saat ini
-      fetchUsers(pagination.current_page);
-      setOpenEdit(false);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      toast.error("Failed to update user");
-    }
-  };
-
-
 
   const handleDeleteConfirm = (id) => {
     setDeleteUserId(id);
@@ -162,42 +141,7 @@ export default function UserDashboard() {
 
         <CardContent>
           <div className="flex justify-between items-center mb-4 gap-2">
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button>Buat User</Button>
-              </DialogTrigger>
-
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New User</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Label>Name</Label>
-                  <Input
-                    type="text"
-                    value={newUser.name}
-                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                    placeholder="Enter name"
-                  />
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    placeholder="Enter email"
-                  />
-                  <Label>Password</Label>
-                  <Input
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    placeholder="Enter password"
-                  />
-                  <Button onClick={handleCreateUser} className="w-full">Submit</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
+            <Button onClick={handleOpenCreate}>Buat User</Button>
             <Input
               type="text"
               placeholder="Cari users..."
@@ -261,21 +205,41 @@ export default function UserDashboard() {
         </CardContent>
       </Card>
 
-      {/* Modal Edit User */}
-      <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+      {/* Modal Create User */}
+      <Dialog open={openCreate} onOpenChange={setOpenCreate}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>Create New User</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Label>Name</Label>
-            <Input value={editUser.name} onChange={(e) => setEditUser({ ...editUser, name: e.target.value })} />
+            <Input
+              type="text"
+              value={newUser.name}
+              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+              placeholder="Enter name"
+            />
             <Label>Email</Label>
-            <Input value={editUser.email} onChange={(e) => setEditUser({ ...editUser, email: e.target.value })} />
-            <Button className="w-full" onClick={handleEdit}>Save Changes</Button>
+            <Input
+              type="email"
+              value={newUser.email}
+              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              placeholder="Enter email"
+            />
+            <Label>Password</Label>
+            <Input
+              type="password"
+              value={newUser.password}
+              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+              placeholder="Enter password"
+            />
+            <Button onClick={handleCreateUser} className="w-full">Submit</Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <ModalsEdit open={openEdit} setOpen={setOpenEdit} editUser={editUser} setEditUser={setEditUser} handleEdit={() => handleEdit(fetchUsers)} />
+
 
       {/* Modal Delete User */}
       <Dialog open={openDelete} onOpenChange={setOpenDelete}>
