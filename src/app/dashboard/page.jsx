@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast, Toaster } from "react-hot-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Sun, Moon } from "lucide-react";
 
 import ModalsEdit from "@/components/dashboard/ModalsEdit";
@@ -16,8 +14,13 @@ import ModalsDelete from "@/components/dashboard/ModalsDelete";
 
 import useEditUser from "@/hooks/useEditUser";
 import useDeleteUser from "@/hooks/useDeleteUser";
+import useCreateUser from "@/hooks/useCreateUser";
+import ModalsCreate from "@/components/dashboard/ModalsCreate";
 
 export default function UserDashboard() {
+  //Hooks for modal create
+  const { openCreate, setOpenCreate, handleOpenCreate, newUser, setNewUser, handleCreateUser } = useCreateUser();
+
   //Hooks for modal edit
   const { openEdit, setOpenEdit, editUser, setEditUser, handleOpenEdit, handleEdit } = useEditUser();
 
@@ -34,10 +37,6 @@ export default function UserDashboard() {
   });
 
   const [loading, setLoading] = useState(true);
-
-  // State untuk modal Create
-  const [openCreate, setOpenCreate] = useState(false);
-  const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
 
   // State untuk dark mode
   const [darkMode, setDarkMode] = useState(() => {
@@ -83,28 +82,6 @@ export default function UserDashboard() {
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleOpenCreate = () => {
-    setOpenCreate(true);
-  };
-
-  const handleCreateUser = () => {
-    if (!newUser.name || !newUser.email || !newUser.password) {
-      toast.error("All fields are required!");
-      return;
-    }
-
-    axios.post("http://localhost:8000/api/users", newUser)
-      .then(() => {
-        toast.success("User created successfully!");
-        setNewUser({ name: "", email: "", password: "" });
-        setOpenCreate(false);
-        fetchUsers();
-      })
-      .catch(() => {
-        toast.error("Failed to create user");
-      });
-  };
 
   return (
     <div className={`p-6 flex justify-center ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"} min-h-screen`}>
@@ -188,37 +165,7 @@ export default function UserDashboard() {
       </Card>
 
       {/* Modal Create User */}
-      <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New User</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Label>Name</Label>
-            <Input
-              type="text"
-              value={newUser.name}
-              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-              placeholder="Enter name"
-            />
-            <Label>Email</Label>
-            <Input
-              type="email"
-              value={newUser.email}
-              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              placeholder="Enter email"
-            />
-            <Label>Password</Label>
-            <Input
-              type="password"
-              value={newUser.password}
-              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-              placeholder="Enter password"
-            />
-            <Button onClick={handleCreateUser} className="w-full">Submit</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ModalsCreate openCreate={openCreate} setOpenCreate={setOpenCreate} newUser={newUser} setNewUser={setNewUser} handleCreateUser={handleCreateUser} />
 
       {/* Modal Edit User */}
       <ModalsEdit open={openEdit} setOpen={setOpenEdit} editUser={editUser} setEditUser={setEditUser} handleEdit={() => handleEdit(fetchUsers)} />
