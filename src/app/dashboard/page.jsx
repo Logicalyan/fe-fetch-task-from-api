@@ -10,11 +10,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sun, Moon } from "lucide-react";
+
 import ModalsEdit from "@/components/dashboard/ModalsEdit";
+import ModalsDelete from "@/components/dashboard/ModalsDelete";
+
 import useEditUser from "@/hooks/useEditUser";
+import useDeleteUser from "@/hooks/useDeleteUser";
 
 export default function UserDashboard() {
+  //Hooks for modal edit
   const { openEdit, setOpenEdit, editUser, setEditUser, handleOpenEdit, handleEdit } = useEditUser();
+
+  //Hooks for modal delete
+  const { openDelete, setOpenDelete, handleDeleteConfirm, handleDelete } = useDeleteUser();
   
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,10 +38,6 @@ export default function UserDashboard() {
   // State untuk modal Create
   const [openCreate, setOpenCreate] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
-
-  //State untuk modal Delete
-  const [openDelete, setOpenDelete] = useState(false);
-  const [deleteUserId, setDeleteUserId] = useState(null);
 
   // State untuk dark mode
   const [darkMode, setDarkMode] = useState(() => {
@@ -100,28 +104,6 @@ export default function UserDashboard() {
       .catch(() => {
         toast.error("Failed to create user");
       });
-  };
-
-  const handleDeleteConfirm = (id) => {
-    setDeleteUserId(id);
-    setOpenDelete(true);
-  };
-
-  // Handle delete user
-  const handleDelete = async () => {
-    if (!deleteUserId) return
-
-    try {
-      await axios.delete(`http://localhost:8000/api/users/${deleteUserId}`);
-      toast.success("User deleted successfully");
-      fetchUsers(pagination.current_page);
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast.error("Failed to delete user");
-    } finally {
-      setOpenDelete(false);
-      setDeleteUserId(null);
-    }
   };
 
   return (
@@ -238,22 +220,11 @@ export default function UserDashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* Modal Edit User */}
       <ModalsEdit open={openEdit} setOpen={setOpenEdit} editUser={editUser} setEditUser={setEditUser} handleEdit={() => handleEdit(fetchUsers)} />
 
-
       {/* Modal Delete User */}
-      <Dialog open={openDelete} onOpenChange={setOpenDelete}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
-          </DialogHeader>
-          <p>Apakah kamu yakin ingin menghapus user ini?</p>
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setOpenDelete(false)}>Batal</Button>
-            <Button variant="destructive" onClick={handleDelete}>Hapus</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ModalsDelete openDelete={openDelete} setOpenDelete={setOpenDelete} handleDelete={() => handleDelete(fetchUsers)}/>
 
     </div>
   );
