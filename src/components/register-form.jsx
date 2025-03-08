@@ -1,66 +1,121 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-export function RegisterForm({
-  className,
-  ...props
-}) {
+export function RegisterForm({ className, ...props }) {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.errors || "Registration failed");
+      }
+
+      setSuccess("Registration successful! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    (<div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="bg-black">
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
         <CardHeader>
-          <CardTitle className="text-2xl text-white">Register</CardTitle>
+          <CardTitle className="text-2xl">Register</CardTitle>
           <CardDescription>
-            Create your account
+            Enter your details below to create an account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="text" className="text-white">Name</Label>
-                <Input id="text" type="text" placeholder="Name" />
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email" className="text-white">Email</Label>
-                <Input id="email" type="email" placeholder="m@example.com" />
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password" className="text-white">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
-                    Forgot your password?
-                  </a>
-                </div>
-                <Input id="password" type="password" />
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
               </div>
-              <Button type="submit" className="w-full bg-white text-black">
-                Register
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+              {success && <p className="text-green-500 text-sm">{success}</p>}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Registering..." : "Register"}
               </Button>
-              {/* <Button variant="outline" className="w-full">
-                Login with Google
-              </Button> */}
             </div>
-            <div className="mt-4 text-center text-sm text-white">
-              Have&apos;t account?{" "}
-              <a href="#" className="underline underline-offset-4">
+            <div className="mt-4 text-center text-sm">
+              Already have an account?{" "}
+              <a href="/login" className="underline underline-offset-4">
                 Login
               </a>
             </div>
           </form>
         </CardContent>
       </Card>
-    </div>)
+    </div>
   );
 }

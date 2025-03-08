@@ -16,8 +16,15 @@ import useEditUser from "@/hooks/useEditUser";
 import useDeleteUser from "@/hooks/useDeleteUser";
 import useCreateUser from "@/hooks/useCreateUser";
 import ModalsCreate from "@/components/dashboard/ModalsCreate";
+import { useRouter } from "next/navigation";
+import { destroyCookie, parseCookies } from "nookies";
 
 export default function UserDashboard() {
+
+  const router = useRouter();
+  const cookies = parseCookies();
+  const token = cookies.token;
+
   //Hooks for modal create
   const { openCreate, setOpenCreate, handleOpenCreate, newUser, setNewUser, handleCreateUser } = useCreateUser();
 
@@ -43,25 +50,24 @@ export default function UserDashboard() {
     return typeof window !== "undefined" ? localStorage.getItem("theme") === "dark" : false;
   });
 
+  // Memeriksa apakah pengguna sudah login
+  useEffect(() => {
+    if (!token) {
+      router.push("/login");
+    }
+  }, [token, router]);  
+  
+  // Fetch users
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => setDarkMode(!darkMode);
-
+  }, [])
   const fetchUsers = (page = 1) => {
     setLoading(true);
-    axios.get(`http://localhost:8000/api/users?page=${page}`)
+    axios.get(`http://localhost:8000/api/users?page=${page}`, {
+      headers: {
+        Authorization: `${token}`,
+      }
+    })
       .then((response) => {
         const paginated = response.data.data;
         setUsers(paginated.data);
@@ -78,6 +84,38 @@ export default function UserDashboard() {
       .finally(() => setLoading(false));
   };
 
+const handleLogout = async () => {
+    try {
+        await axios.post(
+            "http://localhost:8000/api/logout",
+            {},
+            {
+                headers: {
+                    Authorization: `${token}`,
+                },
+            }
+        );
+
+        destroyCookie(null, "token");
+        // localStorage.removeItem("name"); // Hapus nama user jika diperlukan
+        router.push("/login");
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
+};
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -87,8 +125,8 @@ export default function UserDashboard() {
     <div className={`p-6 flex justify-center ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"} min-h-screen`}>
       <Toaster position="top-right" />
       <Card className="w-full max-w-7xl shadow-lg rounded-2xl">
-        <CardHeader className="flex items-center">
-          <CardTitle className="text-3xl font-semibold">User Dashboard</CardTitle>
+        <CardHeader className="flex-row justify-between items-center">
+          <CardTitle className="md:text-3xl font-semibold">User Dashboard</CardTitle>
           {/* <div className="flex items-center space-x-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
@@ -96,6 +134,7 @@ export default function UserDashboard() {
               <Skeleton className="h-4 w-[200px]" />
             </div>
           </div> */}
+          <Button onClick={handleLogout} variant="destructive">Logout</Button>
         </CardHeader>
 
         <CardContent>
@@ -165,7 +204,7 @@ export default function UserDashboard() {
       </Card>
 
       {/* Modal Create User */}
-      <ModalsCreate openCreate={openCreate} setOpenCreate={setOpenCreate} newUser={newUser} setNewUser={setNewUser} handleCreateUser={handleCreateUser} />
+      <ModalsCreate openCreate={openCreate} setOpenCreate={setOpenCreate} newUser={newUser} setNewUser={setNewUser} handleCreateUser={()=> handleCreateUser(fetchUsers)} />
 
       {/* Modal Edit User */}
       <ModalsEdit open={openEdit} setOpen={setOpenEdit} editUser={editUser} setEditUser={setEditUser} handleEdit={() => handleEdit(fetchUsers)} />
