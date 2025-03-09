@@ -1,8 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { parseCookies } from "nookies";
 
 const useEditUser = () => {
+
+    //Ambil token dari cookies
+    const cookies = parseCookies();
+    const token = cookies.token;
+
     // State untuk modal Edit
     const [openEdit, setOpenEdit] = useState(false);
     const [editUser, setEditUser] = useState({ id: "", name: "", email: "" });
@@ -20,9 +26,18 @@ const useEditUser = () => {
             return;
         }
 
+        if (!token) {
+            toast.error("Unauthorized: No token found");
+            return;
+        }
+
         try {
             // Kirim permintaan PUT ke server
-            await axios.put(`http://localhost:8000/api/users/${editUser.id}`, editUser);
+            await axios.put(`http://localhost:8000/api/users/${editUser.id}`, editUser,{
+                headers: {
+                    Authorization: `${token}`,
+                },
+            });
             toast.success("User updated successfully");
             setOpenEdit(false);
             fetchUsers(); // Fetch data setelah update berhasil
