@@ -50,7 +50,7 @@ export function LoginForm({ className, ...props }) {
         path: "/",
         maxAge: 60 * 60 * 24, // 1 day
       });
-      // localStorage.setItem("name", data.data.name);
+      localStorage.setItem("name", data.data.name);
 
       // Redirect ke dashboard
       router.push("/dashboard");
@@ -65,9 +65,9 @@ export function LoginForm({ className, ...props }) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Masuk Akun</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Masukkan email dan password untuk masuk
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -78,7 +78,7 @@ export function LoginForm({ className, ...props }) {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="name@email.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -90,7 +90,7 @@ export function LoginForm({ className, ...props }) {
                   <a
                     href="#"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
-                    Forgot your password?
+                    Lupa Password?
                   </a>
                 </div>
                 <Input
@@ -103,13 +103,13 @@ export function LoginForm({ className, ...props }) {
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Masuk ke akun..." : "Masuk"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
+              Belum punya akun?{" "}
               <a href="/register" className="underline underline-offset-4">
-                Register
+                Daftar
               </a>
             </div>
           </form>

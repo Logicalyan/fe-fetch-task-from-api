@@ -48,7 +48,7 @@ export function RegisterForm({ className, ...props }) {
         throw new Error(data.errors || "Registration failed");
       }
 
-      setSuccess("Registration successful! Redirecting to login...");
+      setSuccess("Berhasil mendaftarkan akun! Silahkan login.");
       setTimeout(() => router.push("/login"), 2000);
     } catch (error) {
       setError(error.message);
@@ -61,20 +61,20 @@ export function RegisterForm({ className, ...props }) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Register</CardTitle>
+          <CardTitle className="text-2xl">Daftar Akun</CardTitle>
           <CardDescription>
-            Enter your details below to create an account
+            Silahkan isi form dibawah ini untuk mendaftar akun
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Nama</Label>
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Your Name"
+                  placeholder="Masukkan nama"
                   value={formData.name}
                   onChange={handleChange}
                   required
@@ -104,13 +104,13 @@ export function RegisterForm({ className, ...props }) {
               {error && <p className="text-red-500 text-sm">{error}</p>}
               {success && <p className="text-green-500 text-sm">{success}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Registering..." : "Register"}
+                {loading ? "Mendaftarkan akun..." : "Daftar"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
+              Sudah punya akun?{" "}
               <a href="/login" className="underline underline-offset-4">
-                Login
+                Masuk
               </a>
             </div>
           </form>

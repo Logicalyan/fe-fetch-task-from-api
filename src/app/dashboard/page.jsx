@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast, Toaster } from "react-hot-toast";
 import { Input } from "@/components/ui/input";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, ChevronDown } from "lucide-react";
 
 import ModalsEdit from "@/components/dashboard/ModalsEdit";
 import ModalsDelete from "@/components/dashboard/ModalsDelete";
@@ -18,12 +18,14 @@ import useCreateUser from "@/hooks/useCreateUser";
 import ModalsCreate from "@/components/dashboard/ModalsCreate";
 import { useRouter } from "next/navigation";
 import { destroyCookie, parseCookies } from "nookies";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function UserDashboard() {
 
   const router = useRouter();
   const cookies = parseCookies();
   const token = cookies.token;
+  const [name, setName] = useState("");
 
   //Hooks for modal create
   const { openCreate, setOpenCreate, handleOpenCreate, newUser, setNewUser, handleCreateUser } = useCreateUser();
@@ -33,7 +35,7 @@ export default function UserDashboard() {
 
   //Hooks for modal delete
   const { openDelete, setOpenDelete, handleDeleteConfirm, handleDelete } = useDeleteUser();
-  
+
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState({
@@ -55,8 +57,13 @@ export default function UserDashboard() {
     if (!token) {
       router.push("/login");
     }
-  }, [token, router]);  
-  
+
+    const storageName = localStorage.getItem("name");
+    if (storageName) {
+      setName(storageName);
+    }
+  }, [token, router]);
+
   // Fetch users
   useEffect(() => {
     fetchUsers();
@@ -84,25 +91,25 @@ export default function UserDashboard() {
       .finally(() => setLoading(false));
   };
 
-const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
-        await axios.post(
-            "http://localhost:8000/api/logout",
-            {},
-            {
-                headers: {
-                    Authorization: `${token}`,
-                },
-            }
-        );
+      await axios.post(
+        "http://localhost:8000/api/logout",
+        {},
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
 
-        destroyCookie(null, "token");
-        // localStorage.removeItem("name"); // Hapus nama user jika diperlukan
-        router.push("/login");
+      destroyCookie(null, "token");
+      // localStorage.removeItem("name"); // Hapus nama user jika diperlukan
+      router.push("/login");
     } catch (error) {
-        console.error("Logout failed:", error);
+      console.error("Logout failed:", error);
     }
-};
+  };
 
   useEffect(() => {
     if (darkMode) {
@@ -126,15 +133,21 @@ const handleLogout = async () => {
       <Toaster position="top-right" />
       <Card className="w-full max-w-7xl shadow-lg rounded-2xl">
         <CardHeader className="flex-row justify-between items-center">
-          <CardTitle className="md:text-3xl font-semibold">User Dashboard</CardTitle>
-          {/* <div className="flex items-center space-x-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
-            </div>
-          </div> */}
-          <Button onClick={handleLogout} variant="destructive">Logout</Button>
+          <CardTitle className="w-full flex justify-between items-center">
+            <p> 
+            Dashboard
+            </p>
+            <Popover>
+              <PopoverTrigger className="cursor-pointer flex items-center justify-center md:space-x-4 space-x-2">
+                <p className="font-semibold md:block">Hello, {name}</p>
+                <ChevronDown className="md:w-4 md:h-4 w-2 h-2 text-gray-500"/>
+              </PopoverTrigger>
+              <PopoverContent>
+                <p className="font-semibold">{name}</p>
+                <Button onClick={handleLogout} variant="destructive">Keluar</Button>
+              </PopoverContent>
+            </Popover>
+          </CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -162,9 +175,10 @@ const handleLogout = async () => {
                   <TableRow>
                     <TableHead>No</TableHead>
                     <TableHead>ID</TableHead>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Nama</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
+                    <TableHead>Dibuat pada</TableHead>
+                    <TableHead className="text-center">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -174,6 +188,17 @@ const handleLogout = async () => {
                       <TableCell>{user.id}</TableCell>
                       <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        {new Date(user.created_at).toLocaleDateString("id-ID", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                          second: "numeric",
+                          timeZone: "Asia/Jakarta",
+                        })}
+                      </TableCell>
                       <TableCell className="flex gap-2 justify-center">
                         <Button size="sm" onClick={() => handleOpenEdit(user)}>Ubah</Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDeleteConfirm(user.id)}>Hapus</Button>
@@ -185,15 +210,15 @@ const handleLogout = async () => {
 
               <div className="flex justify-between items-center mt-4">
                 {pagination.prev_page_url ? (
-                  <Button onClick={() => fetchUsers(pagination.current_page - 1)}>Previous</Button>
+                  <Button onClick={() => fetchUsers(pagination.current_page - 1)}>Sebelumnya</Button>
                 ) : (
                   <span />
                 )}
                 <span>
-                  Page {pagination.current_page} of {pagination.last_page}
+                  Halaman {pagination.current_page} dari {pagination.last_page}
                 </span>
                 {pagination.next_page_url ? (
-                  <Button onClick={() => fetchUsers(pagination.current_page + 1)}>Next</Button>
+                  <Button onClick={() => fetchUsers(pagination.current_page + 1)}>Selanjutnya</Button>
                 ) : (
                   <span />
                 )}
@@ -204,13 +229,13 @@ const handleLogout = async () => {
       </Card>
 
       {/* Modal Create User */}
-      <ModalsCreate openCreate={openCreate} setOpenCreate={setOpenCreate} newUser={newUser} setNewUser={setNewUser} handleCreateUser={()=> handleCreateUser(fetchUsers)} />
+      <ModalsCreate openCreate={openCreate} setOpenCreate={setOpenCreate} newUser={newUser} setNewUser={setNewUser} handleCreateUser={() => handleCreateUser(fetchUsers)} />
 
       {/* Modal Edit User */}
       <ModalsEdit open={openEdit} setOpen={setOpenEdit} editUser={editUser} setEditUser={setEditUser} handleEdit={() => handleEdit(fetchUsers)} />
 
       {/* Modal Delete User */}
-      <ModalsDelete openDelete={openDelete} setOpenDelete={setOpenDelete} handleDelete={() => handleDelete(fetchUsers)}/>
+      <ModalsDelete openDelete={openDelete} setOpenDelete={setOpenDelete} handleDelete={() => handleDelete(fetchUsers)} />
 
     </div>
   );
